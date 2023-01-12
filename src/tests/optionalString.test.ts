@@ -1,7 +1,7 @@
 import { Tokenizer } from "../tokenize";
 import { describe, expect, it } from "vitest";
 
-describe("stringToken", () => {
+describe("optionalString", () => {
     it("should parse string", () => {
         const tokenizer = new Tokenizer(`"test 123"`);
         expect(tokenizer.optionalString()).toStrictEqual({

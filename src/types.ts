@@ -5,7 +5,7 @@ export interface TokenMeta {
 }
 
 //indicates token types that can be used for array values or object property values
-export type UsableToken = StringToken | NumberToken | ObjectToken | ArrayToken;
+export type UsableToken = StringToken | NumberToken | ObjectToken | ArrayToken | BooleanToken | NullToken;
 
 export interface StringToken {
     __meta : TokenMeta;
@@ -19,10 +19,34 @@ export interface NumberToken {
     value : number; 
 }
 
+export interface NullToken {
+    __meta : TokenMeta;
+    __type : "null";
+    value : null;
+}
+
+export interface TrueToken {
+    __meta : TokenMeta;
+    __type : "true";
+    value : true;
+}
+
+export interface FalseToken {
+    __meta : TokenMeta;
+    __type : "false";
+    value : false;
+}
+
+export interface BooleanToken {
+    __meta : TokenMeta;
+    __type : "boolean";
+    value : boolean;
+}
+
 export interface PropertyToken {
     __meta : TokenMeta;
     __type : "property",
-    name : string;
+    name : StringToken;
     value : UsableToken;
 }
 
