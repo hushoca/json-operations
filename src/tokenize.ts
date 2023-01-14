@@ -1,44 +1,48 @@
-import { ArrayToken, BooleanToken, FalseToken, NullToken, NumberToken, ObjectToken, PropertyToken, StringToken, TokenMeta, TrueToken, UsableToken } from "types";
+import { 
+    ArrayToken, BooleanToken, FalseToken, JsonTokenizeError, NullToken, 
+    NumberToken, ObjectToken, PropertyToken, StringToken, 
+    TokenMeta, TrueToken, UsableToken 
+} from "types";
 
 type TokenizeResult = {
     success : false,
-    errors : any[]
+    errors : JsonTokenizeError[]
 } | {
     success : true,
-    result : UsableToken
+    result : UsableToken | undefined
 }
 
 const numberStartChars = [..."-0123456789"];
 const numberMiddleChars = [...".0123456789"];
 const whitespaces = [..."\t\r\n "];
 
-class JsonError {
-    public constructor(public message : string, public position : number) { }
-}
-
-interface ITokenizeStateMachine {
-    index : number;
-}
-
-export class Tokenizer  implements ITokenizeStateMachine {
+export class Tokenizer {
     public index : number = 0;
+    public line : number = 0;
+    public column : number = 0;
     private char : string;
 
-    private throwError(message : string) {
-        throw new JsonError(message, this.index);
+    public throwError(message : string) {
+        throw new JsonTokenizeError(message, this.index, this.line, this.column);
     }
 
     public constructor(private code : string) {
         this.char = code.length > 0 ? code[0] : "";
     }
 
-    private get endOfCode() {
+    public get endOfCode() {
         return this.index == this.code.length - 1;
     }
 
     private next() {
         if(this.index == this.code.length - 1) throw "Read too much";
         this.char = this.code[++this.index];
+        if(this.char == "\n") {
+            this.line++;
+            this.column = 0;
+        } else {
+            this.column++;
+        }
     }
 
     private getMeta(startIndex : number, endIndex : number = this.index + 1) : TokenMeta  {
@@ -52,12 +56,11 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalNumber() : NumberToken | undefined {
         if(numberStartChars.includes(this.char)) {
             let dotCount = 0;
-            let num = this.char;
+            let num = "";
             let startIndex = this.index;
             while(true) {
-                this.next();
                 if(this.char == ".") dotCount++;
-                if(dotCount == 2) this.throwError("A number can only contain a single '.'");
+                if(dotCount == 2) this.throwError("Invalid character");
                 num += this.char;
                 if(this.endOfCode || !numberMiddleChars.includes(this.code[this.index + 1])) {
                     const token : NumberToken = { 
@@ -68,6 +71,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
                     if(!this.endOfCode) this.next();
                     return token;
                 }
+                this.next();
             }
         }
         return undefined;
@@ -78,7 +82,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
             let code = "";
             this.next(); //skip \
             this.next(); //skip u
-            if(this.index + 4 >= this.code.length) this.throwError("Incomplete unicode character.");
+            if(this.index + 4 >= this.code.length) this.throwError("Incomplete unicode character");
             for(let i = 0; i < 4; i++) {
                 code += this.char;
                 this.next();
@@ -95,7 +99,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
             this.next();
             while(!this.endOfCode || this.char == '"') {
                 //@ts-ignore
-                if(this.char == "\r" || this.char == "\n") this.throwError("Strings cannot be broken into multiple lines.");
+                if(this.char == "\r" || this.char == "\n") this.throwError("Strings cannot be spread over multiple lines");
                 //@ts-ignore
                 if(this.char == "\\") { 
                     const unicodeChar = this.optionalUnicodeChar();
@@ -125,7 +129,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
                 str += this.char;
                 this.next();
             }
-            this.throwError("Unterminated string literal.");
+            this.throwError("Unterminated string literal");
         }
     }
 
@@ -141,7 +145,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalArray() : ArrayToken | undefined {      
         if(this.char == "[") {
             let startIndex = this.index;
-            if(this.endOfCode) this.throwError("Unterminated array.");
+            if(this.endOfCode) this.throwError("Unterminated array");
             this.next();
             let items : UsableToken[] = [];
             let expectMoreitems = false;
@@ -149,13 +153,13 @@ export class Tokenizer  implements ITokenizeStateMachine {
                 //@ts-ignore
                 if(this.char == ",") {
                     expectMoreitems = true; 
-                    if(this.endOfCode) this.throwError("Expected an item after comma.");
+                    if(this.endOfCode) this.throwError("Commas should be followed by items within arrays");
                     this.next();
                     continue;
                 }
                 //@ts-ignore
                 if(this.char == "]") {
-                    if(expectMoreitems) this.throwError("Expected an item after comma.");
+                    if(expectMoreitems) this.throwError("Commas should be followed by items within arrays");
                     const __meta = this.getMeta(startIndex);
                     if(!this.endOfCode) this.next();
                     return {
@@ -164,11 +168,11 @@ export class Tokenizer  implements ITokenizeStateMachine {
                         __meta
                     }
                 }
-                if(this.endOfCode) this.throwError("Unterminated array.");
+                if(this.endOfCode) this.throwError("Unterminated array");
 
                 const token = this.optionalWhitespace() ?? this.optionalBoolean() ?? this.optionalNull() ?? 
                                 this.optionalNumber() ?? this.optionalString() ?? this.optionalObject() ?? 
-                                this.optionalArray() ?? this.throwError(`Unknown character at ${this.index}`);                          
+                                this.optionalArray() ?? this.throwError(`Invalid character`);                          
                 if(token?.__type == "whitespace") continue;
                 //@ts-ignore
                 items.push(token);
@@ -181,16 +185,16 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalNull() : NullToken | undefined {
         if(this.char == "n") {
             const startIndex = this.index;
-            if(this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`);
+            if(this.endOfCode) throw this.throwError(`Invalid character`);
             this.next();
             //@ts-ignore
-            if(this.char != "u" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "u" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();
             //@ts-ignore
-            if(this.char != "l" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "l" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();            
             //@ts-ignore
-            if(this.char != "l") throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "l") throw this.throwError(`Invalid character`); 
             const __meta = this.getMeta(startIndex);
             if(!this.endOfCode) this.next();
             return {
@@ -205,16 +209,16 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalTrue() : TrueToken | undefined {
         if(this.char == "t") {
             const startIndex = this.index;
-            if(this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`);
+            if(this.endOfCode) throw this.throwError(`Invalid character`);
             this.next();
             //@ts-ignore
-            if(this.char != "r" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "r" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();
             //@ts-ignore
-            if(this.char != "u" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "u" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();            
             //@ts-ignore
-            if(this.char != "e") throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "e") throw this.throwError(`Invalid character`); 
             const __meta = this.getMeta(startIndex);
             if(!this.endOfCode) this.next();
             return {
@@ -229,19 +233,19 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalFalse() : FalseToken | undefined {
         if(this.char == "f") {
             const startIndex = this.index;
-            if(this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`);
+            if(this.endOfCode) throw this.throwError(`Invalid character`);
             this.next();
             //@ts-ignore
-            if(this.char != "a" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "a" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();
             //@ts-ignore
-            if(this.char != "l" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "l" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();            
             //@ts-ignore
-            if(this.char != "s" || this.endOfCode) throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "s" || this.endOfCode) throw this.throwError(`Invalid character`); 
             this.next();            
             //@ts-ignore
-            if(this.char != "e") throw this.throwError(`Invalid character at ${startIndex}.`); 
+            if(this.char != "e") throw this.throwError(`Invalid character`); 
             const __meta = this.getMeta(startIndex);
             if(!this.endOfCode) this.next();
             return {
@@ -266,17 +270,16 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public expectProperty() : PropertyToken | undefined {
         let startIndex = this.index;
         const name = this.optionalString();
-        if(name == undefined) this.throwError("Missing property name"); 
+        if(name == undefined) this.throwError("Invalid property name (property names can only be strings)"); 
         this.optionalWhitespace();
-        if(this.char !== ":") this.throwError(`Expected colon after property name. Instead got ${this.char}.`);
+        if(this.char !== ":") this.throwError(`Invalid character`);
         this.next();
         this.optionalWhitespace();
-        const value = this.optionalArray() ?? this.optionalBoolean() ??
-                        this.optionalNumber() ?? this.optionalString() ?? this.optionalObject() ??
-                        this.optionalNull();
-        if(value === undefined) this.throwError(`Expected a property value. Instead got ${this.char}`);
+        const value = this.optionalBoolean() ?? this.optionalNull() ?? this.optionalNumber() ?? 
+                        this.optionalString() ?? this.optionalObject() ?? this.optionalArray();
+        if(value === undefined) this.throwError(`Invalid character`);
         return {
-            __meta: this.getMeta(startIndex, this.index - 1),
+            __meta: this.getMeta(startIndex, this.index),
             __type: "property",
             name: name!,
             value: value!
@@ -293,7 +296,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalObject() : ObjectToken | undefined {
         if(this.char == "{") {
             let startIndex = this.index;
-            if(this.endOfCode) this.throwError("Unterminated object.");
+            if(this.endOfCode) this.throwError("Unterminated object");
             this.next();
             let expectMoreProperties = false;
             let properties : PropertyToken[] = []
@@ -301,7 +304,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
             while(!this.endOfCode || this.char == "}") {
                 //@ts-ignore
                 if(this.char == "}") {
-                    if(expectMoreProperties) this.throwError("Comma after the last property means another property must be present.");
+                    if(expectMoreProperties) this.throwError("Commas should be followed by more properties within objects");
                     const __meta = this.getMeta(startIndex);
                     if(!this.endOfCode) this.next();
                     return {
@@ -313,25 +316,39 @@ export class Tokenizer  implements ITokenizeStateMachine {
                 const token = this.optionalWhitespace() ?? this.optionalComma() ?? this.expectProperty();
                 if(token?.__type == "whitespace") continue;
                 if(token?.__type == "comma") { 
-                    if(properties.length == 0) this.throwError("Comma in the middle of an object without properties being present is invalid.");
+                    if(properties.length == 0) this.throwError("Invalid character");
                     expectMoreProperties = true;
                     continue;
                 }
                 properties.push(token as PropertyToken);
+                expectMoreProperties = false;
             }
-            this.throwError("Unterminated object.")
+            this.throwError("Unterminated object")
         }
         return undefined;
     }
 
 }
 
-const tokenize =  function(json : string) : TokenizeResult {
-    let i = 0;
-    let line = 0;
-    let column = 0;
-    // throw "Not yet implemented!";
-    return { success: false, errors: [ "xd" ] }
+type TokenizeOptions = { throwError?: boolean }
+const tokenize = function(json : string, opts : TokenizeOptions = { throwError: false }) : TokenizeResult {
+    const tokenizer = new Tokenizer(json);
+    try {
+        tokenizer.optionalWhitespace();
+        const result = tokenizer.optionalString() ?? tokenizer.optionalNumber() ?? tokenizer.optionalBoolean() ??
+                        tokenizer.optionalNull() ?? tokenizer.optionalArray() ?? tokenizer.optionalObject();
+        tokenizer.optionalWhitespace();
+        if(!tokenizer.endOfCode) {
+            throw tokenizer.throwError(`Invalid character`);
+        }
+        return { success: true, result }
+    } catch(e : any) {
+        if(e instanceof JsonTokenizeError) {
+            if(opts.throwError) throw e;
+            return { success: false, errors: [ e ] };
+        }
+        throw "Unexpected error: " + JSON.stringify(e);
+    }
 }
 
 export default tokenize;

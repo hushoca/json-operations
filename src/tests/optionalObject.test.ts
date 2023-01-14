@@ -40,15 +40,27 @@ describe("optionalObject", () => {
             properties: [{
                 __type: "property",
                 name: {
-
+                    __type: "string",
+                    value: "test",
+                    __meta: {
+                        startIndex: 1,
+                        endIndex: 7,
+                        length: 6
+                    }
                 },
                 value: {
-
+                    __type: "number",
+                    value: 123,
+                    __meta: {
+                        startIndex: 8,
+                        endIndex: 11,
+                        length: 3
+                    }
                 },
                 __meta: {
-                    startIndex: 0,
-                    endIndex: 12,
-                    length: 12
+                    startIndex: 1,
+                    endIndex: 11,
+                    length: 10
                 }
             }],
             __meta: {
@@ -325,7 +337,7 @@ describe("optionalObject", () => {
                 __meta: {
                     startIndex: 2,
                     endIndex: 13,
-                    length: 10
+                    length: 11
                 }
             }],
             __meta: {
@@ -377,12 +389,12 @@ describe("optionalObject", () => {
 
     it("should error when a unfinished object is received (with spaces)", () => {
         const tokenizer = new Tokenizer(`{  `);
-        expect(() => tokenizer.optionalObject()).toThrow("Unterminated object.");
+        expect(() => tokenizer.optionalObject()).toThrow("Unterminated object");
     })
 
     it("should error when a unfinished object is received", () => {
         const tokenizer = new Tokenizer(`{`);
-        expect(() => tokenizer.optionalObject()).toThrow("Unterminated object.");
+        expect(() => tokenizer.optionalObject()).toThrow("Unterminated object");
     })
 
 })

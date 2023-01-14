@@ -36,11 +36,11 @@ describe("optionalBoolean", () => {
 
     it("should error when left unfinished (true)", () => {
         const tokenizer = new Tokenizer(`tru`);
-        expect(() => tokenizer.optionalBoolean()).throws("Invalid character at 0");
+        expect(() => tokenizer.optionalBoolean()).throws("Invalid character");
     })
 
     it("should error when left unfinished (false)", () => {
         const tokenizer = new Tokenizer(`fals`);
-        expect(() => tokenizer.optionalBoolean()).throws("Invalid character at 0");
+        expect(() => tokenizer.optionalBoolean()).throws("Invalid character");
     })
 })

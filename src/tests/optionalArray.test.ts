@@ -260,12 +260,12 @@ describe("optionalArray", () => {
 
     it("should error when left incomplete (without comma)", () => {
         const tokenizer = new Tokenizer(`[ "test"`);
-        expect(() => tokenizer.optionalArray()).toThrow("Unterminated array.");
+        expect(() => tokenizer.optionalArray()).toThrow("Unterminated array");
     })
 
     it("should error when left incomplete (with comma)", () => {
         const tokenizer = new Tokenizer(`[ "test", `);
-        expect(() => tokenizer.optionalArray()).toThrow("Unterminated array.");
+        expect(() => tokenizer.optionalArray()).toThrow("Unterminated array");
     })
 
     it("should return undefined when not array", () => {

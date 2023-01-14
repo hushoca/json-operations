@@ -70,12 +70,12 @@ describe("optionalString", () => {
 
     it("should not parse string with new line [\\n]", () => {
         const tokenizer = new Tokenizer(`"string with\nspaces"`);
-        expect(() => tokenizer.optionalString()).toThrow("Strings cannot be broken into multiple lines.");
+        expect(() => tokenizer.optionalString()).toThrow("Strings cannot be spread over multiple lines");
     })
 
     it("should not parse string with new line [\\r]", () => {
         const tokenizer = new Tokenizer(`"string with\rspaces"`);
-        expect(() => tokenizer.optionalString()).toThrow("Strings cannot be broken into multiple lines.");
+        expect(() => tokenizer.optionalString()).toThrow("Strings cannot be spread over multiple lines");
     })
 
 })
