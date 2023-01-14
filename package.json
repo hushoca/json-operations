@@ -1,7 +1,7 @@
 {
-  "name": "json-utilities",
-  "version": "1.0.0",
-  "description": "JSON utilities allows you to work with JSON, parse in a standardized way, get tokenize JSON, etc...",
+  "name": "json-operations",
+  "version": "0.0.1",
+  "description": "json-operations allows you to work with JSON, parse in a standardized way, get tokenize JSON, etc...",
   "license": "ISC",
   "author": "Huseyin Hoca",
   "main": "dist/index.cjs.js",

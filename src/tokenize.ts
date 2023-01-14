@@ -2,7 +2,7 @@ import {
     ArrayToken, BooleanToken, FalseToken, JsonTokenizeError, NullToken, 
     NumberToken, ObjectToken, PropertyToken, StringToken, 
     TokenMeta, TrueToken, UsableToken 
-} from "types";
+} from "./types";
 
 type TokenizeResult = {
     success : false,
@@ -331,7 +331,7 @@ export class Tokenizer {
 }
 
 type TokenizeOptions = { throwError?: boolean }
-const tokenize = function(json : string, opts : TokenizeOptions = { throwError: false }) : TokenizeResult {
+export const tokenize = function(json : string, opts : TokenizeOptions = { throwError: false }) : TokenizeResult {
     const tokenizer = new Tokenizer(json);
     try {
         tokenizer.optionalWhitespace();
@@ -350,5 +350,3 @@ const tokenize = function(json : string, opts : TokenizeOptions = { throwError: 
         throw "Unexpected error: " + JSON.stringify(e);
     }
 }
-
-export default tokenize;

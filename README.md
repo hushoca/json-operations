@@ -1,18 +1,18 @@
-# json-utilities (WIP)
+# json-operations (WIP)
 
-Json utilities is my attempt at writing a way of parsing, tokenizing and generally working with JSON that can be used on browsers/node etc while having a standard error schema. If you are after simple parsing I recommend still using JSON.parse().
+Json operations is my attempt at writing a way of parsing, tokenizing and generally working with JSON that can be used on browsers/node etc while having a standard error schema. If you are after simple parsing I recommend still using JSON.parse().
 
 I was building something that required for me to raise errors when JSON was invalid and identify where it was broken, I couldn't find a library that I liked that did it (and JSON.parse() throws different errors on each browser). So I wrote this library
 
 # Installation
 ```
-npm install json-utilities
+npm install json-operations
 ```
 
 # Tokenization
 
 ```ts
-import { tokenize } from "json-utilities"
+import { tokenize } from "json-operations"
 
 const token = tokenize(`{"foo":"bar"}`);
 

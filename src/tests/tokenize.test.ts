@@ -1,4 +1,4 @@
-import tokenize, { Tokenizer } from "../tokenize";
+import { tokenize } from "../tokenize";
 import { describe, expect, it } from "vitest";
 
 describe("tokenize", () => {
