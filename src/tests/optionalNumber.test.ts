@@ -66,7 +66,7 @@ describe("optionalNumber", () => {
 
     it("should not work with invalid fractionals (multiple dots)", () => {
         const tokenizer = new Tokenizer(`0.2.5`);
-        expect(() => tokenizer.optionalNumber()).throws("A number can only contain a single '.'");
+        expect(() => tokenizer.optionalNumber()).throws("Invalid character");
     });
 
     it("should parse as much as it can [space break]", () => {

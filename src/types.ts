@@ -61,3 +61,7 @@ export interface ArrayToken {
     __type : "array";
     items : UsableToken[]
 }
+
+export class JsonTokenizeError {
+    public constructor(public message : string, public position : number, public line : number, public column : number) { }
+}
