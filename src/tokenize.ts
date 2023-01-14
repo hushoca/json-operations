@@ -1,4 +1,4 @@
-import { ArrayToken, BooleanToken, FalseToken, NullToken, NumberToken, ObjectToken, StringToken, TokenMeta, TrueToken, UsableToken } from "types";
+import { ArrayToken, BooleanToken, FalseToken, NullToken, NumberToken, ObjectToken, PropertyToken, StringToken, TokenMeta, TrueToken, UsableToken } from "types";
 
 type TokenizeResult = {
     success : false,
@@ -41,11 +41,11 @@ export class Tokenizer  implements ITokenizeStateMachine {
         this.char = this.code[++this.index];
     }
 
-    private getMeta(startIndex : number) : TokenMeta  {
+    private getMeta(startIndex : number, endIndex : number = this.index + 1) : TokenMeta  {
         return {
             startIndex,
-            endIndex: this.index + 1,
-            length: this.index - startIndex + 1
+            endIndex,
+            length: endIndex - startIndex
         }
     }
 
@@ -141,6 +141,7 @@ export class Tokenizer  implements ITokenizeStateMachine {
     public optionalArray() : ArrayToken | undefined {      
         if(this.char == "[") {
             let startIndex = this.index;
+            if(this.endOfCode) this.throwError("Unterminated array.");
             this.next();
             let items : UsableToken[] = [];
             let expectMoreitems = false;
@@ -262,8 +263,64 @@ export class Tokenizer  implements ITokenizeStateMachine {
        }
     }
 
+    public expectProperty() : PropertyToken | undefined {
+        let startIndex = this.index;
+        const name = this.optionalString();
+        if(name == undefined) this.throwError("Missing property name"); 
+        this.optionalWhitespace();
+        if(this.char !== ":") this.throwError(`Expected colon after property name. Instead got ${this.char}.`);
+        this.next();
+        this.optionalWhitespace();
+        const value = this.optionalArray() ?? this.optionalBoolean() ??
+                        this.optionalNumber() ?? this.optionalString() ?? this.optionalObject() ??
+                        this.optionalNull();
+        if(value === undefined) this.throwError(`Expected a property value. Instead got ${this.char}`);
+        return {
+            __meta: this.getMeta(startIndex, this.index - 1),
+            __type: "property",
+            name: name!,
+            value: value!
+        } 
+    }
+
+    private optionalComma() {
+        if(this.char == ",") { 
+            this.next();
+            return { __type: "comma" }
+        }
+    }
+
     public optionalObject() : ObjectToken | undefined {
-        //TODO
+        if(this.char == "{") {
+            let startIndex = this.index;
+            if(this.endOfCode) this.throwError("Unterminated object.");
+            this.next();
+            let expectMoreProperties = false;
+            let properties : PropertyToken[] = []
+            //@ts-ignore
+            while(!this.endOfCode || this.char == "}") {
+                //@ts-ignore
+                if(this.char == "}") {
+                    if(expectMoreProperties) this.throwError("Comma after the last property means another property must be present.");
+                    const __meta = this.getMeta(startIndex);
+                    if(!this.endOfCode) this.next();
+                    return {
+                        __meta,
+                        __type: "object",
+                        properties
+                    }
+                }
+                const token = this.optionalWhitespace() ?? this.optionalComma() ?? this.expectProperty();
+                if(token?.__type == "whitespace") continue;
+                if(token?.__type == "comma") { 
+                    if(properties.length == 0) this.throwError("Comma in the middle of an object without properties being present is invalid.");
+                    expectMoreProperties = true;
+                    continue;
+                }
+                properties.push(token as PropertyToken);
+            }
+            this.throwError("Unterminated object.")
+        }
         return undefined;
     }
 
