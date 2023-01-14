@@ -1,12 +1,13 @@
 {
   "name": "json-operations",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "json-operations allows you to work with JSON, parse in a standardized way, get tokenize JSON, etc...",
   "license": "ISC",
   "author": "Huseyin Hoca",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
+  "keywords": ["json", "util", "utilities", "operations", "tokenize", "tokenizer", "parser", "JSON.parse", "JSON"],
   "files": [
     "dist"
   ],
