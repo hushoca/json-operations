@@ -272,7 +272,7 @@ export class Tokenizer {
         const name = this.optionalString();
         if(name == undefined) this.throwError("Invalid property name (property names can only be strings)"); 
         this.optionalWhitespace();
-        if(this.char !== ":") this.throwError(`Invalid character`);
+        if(this.char !== ":" || this.endOfCode) this.throwError(`Invalid character`);
         this.next();
         this.optionalWhitespace();
         const value = this.optionalBoolean() ?? this.optionalNull() ?? this.optionalNumber() ?? 

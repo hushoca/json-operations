@@ -1,5 +1,6 @@
 import { Tokenizer } from "../tokenize";
 import { describe, expect, it } from "vitest";
+import { JsonTokenizeError } from "types";
 
 describe("optionalObject", () => {
 
@@ -15,6 +16,11 @@ describe("optionalObject", () => {
                 length: 2
             }
         });
+    })
+
+    it("should error when a half complete property is present", () => {
+        const tokenizer = new Tokenizer(`{"":`);
+        expect(() => tokenizer.optionalObject()).toThrow("Invalid character");
     })
 
     it("should work with empty objects (with whitespace)", () => {

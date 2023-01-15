@@ -15,6 +15,19 @@ describe("optionalString", () => {
         });
     })
 
+    it("should work with empty strings", () => {
+        const tokenizer = new Tokenizer(`""`);
+        expect(tokenizer.optionalString()).toStrictEqual({
+            __type : "string",
+            value: "",
+            __meta: {
+                startIndex: 0,
+                endIndex : 2,
+                length: 2
+            }
+        });
+    })
+
     it("should parse string with spaces ", () => {
         const tokenizer = new Tokenizer(`"str\\ning with\\tspaces"`);
         expect(tokenizer.optionalString()).toStrictEqual({
