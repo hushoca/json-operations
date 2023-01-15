@@ -1,13 +1,23 @@
 {
   "name": "json-operations",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "json-operations allows you to work with JSON, parse in a standardized way, get tokenize JSON, etc...",
   "license": "ISC",
   "author": "Huseyin Hoca",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
-  "keywords": ["json", "util", "utilities", "operations", "tokenize", "tokenizer", "parser", "JSON.parse", "JSON"],
+  "keywords": [
+    "json",
+    "util",
+    "utilities",
+    "operations",
+    "tokenize",
+    "tokenizer",
+    "parser",
+    "JSON.parse",
+    "JSON"
+  ],
   "files": [
     "dist"
   ],
@@ -22,8 +32,6 @@
     "format:styles": "stylelint ./**/*.{css,scss} --fix"
   },
   "devDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.9",
     "@typescript-eslint/eslint-plugin": "^5.46.0",
@@ -35,6 +43,8 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
     "prettier": "^2.8.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "stylelint": "^14.16.0",
     "stylelint-config-recommended": "^9.0.0",
     "stylelint-config-sass-guidelines": "^9.0.1",

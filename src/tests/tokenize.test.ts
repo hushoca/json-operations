@@ -1,5 +1,6 @@
 import { tokenize } from "../tokenize";
 import { describe, expect, it } from "vitest";
+import { JsonTokenizeError } from "../types";
 
 describe("tokenize", () => {
 
@@ -113,6 +114,30 @@ describe("tokenize", () => {
                 }
             }
         });
+    })
+
+    it("should error with invalid syntax", () => {
+        expect(tokenize("a")).toStrictEqual({ success: false, errors: [
+            new JsonTokenizeError("Invalid character", 0, 0, 0)
+        ]})
+    })
+
+    it("should error with invalid syntax (with whitespace)", () => {
+        expect(tokenize("     a")).toStrictEqual({ success: false, errors: [
+            new JsonTokenizeError("Invalid character", 5, 0, 5)
+        ]})
+    })
+
+    it("should error with invalid syntax (with multiline)", () => {
+        expect(tokenize("   \n  a")).toStrictEqual({ success: false, errors: [
+            new JsonTokenizeError("Invalid character", 6, 1, 2)
+        ]})
+    })
+
+    it("should error with invalid syntax (with multiline + whitespace after)", () => {
+        expect(tokenize("   \n  a   ")).toStrictEqual({ success: false, errors: [
+            new JsonTokenizeError("Invalid character", 6, 1, 2)
+        ]})
     })
 
 })

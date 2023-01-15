@@ -39,7 +39,7 @@ export class Tokenizer {
         this.char = this.code[++this.index];
         if(this.char == "\n") {
             this.line++;
-            this.column = 0;
+            this.column = -1;
         } else {
             this.column++;
         }
@@ -334,14 +334,17 @@ type TokenizeOptions = { throwError?: boolean }
 export const tokenize = function(json : string, opts : TokenizeOptions = { throwError: false }) : TokenizeResult {
     const tokenizer = new Tokenizer(json);
     try {
+        if(/^\s*$/g.test(json)) return { success: true, result: undefined };
         tokenizer.optionalWhitespace();
         const result = tokenizer.optionalString() ?? tokenizer.optionalNumber() ?? tokenizer.optionalBoolean() ??
-                        tokenizer.optionalNull() ?? tokenizer.optionalArray() ?? tokenizer.optionalObject();
-        tokenizer.optionalWhitespace();
-        if(!tokenizer.endOfCode) {
-            throw tokenizer.throwError(`Invalid character`);
+        tokenizer.optionalNull() ?? tokenizer.optionalArray() ?? tokenizer.optionalObject() ?? tokenizer.optionalWhitespace();
+        if(result?.__type == "whitespace") {
+            return { success: true, result: undefined };
         }
-        return { success: true, result }
+        if(result == undefined) tokenizer.throwError("Invalid character"); 
+        tokenizer.optionalWhitespace();
+        if(!tokenizer.endOfCode) throw tokenizer.throwError(`Invalid character`);
+        return { success: true, result: result as UsableToken }
     } catch(e : any) {
         if(e instanceof JsonTokenizeError) {
             if(opts.throwError) throw e;

@@ -40,7 +40,7 @@ The following error messages might come out of tokenize function:
 
 JsonTokenizeError has the following format:
 ```ts
-{
+class JsonTokenizeError {
     public message : string; //error message (possible values listed above)
     public position : number; //index of the character that triggered the error
     public line : number; //current line (based on \n)
